@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/html5-E34F26.svg?style=flat&logo=html5&logoColor=white" alt="HTML5">
   <img src="https://img.shields.io/badge/mysql-4479A1.svg?style=flat&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/XAMPP-FF7F50.svg?style=flat&logo=xampp&logoColor=white" alt="XAMPP">
-  <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" alt="Status">
+  <img src="https://img.shields.io/badge/status-conclu%C3%ADdo-brightgreen" alt="Status">
 </p>
 
 # 🍕 Pizzaria Tabajara
@@ -37,5 +37,4 @@ Este projeto simula um sistema de delivery de pizzaria, feito com foco em aprend
 
 ---
 
-## 📂 Estrutura do Projeto
 

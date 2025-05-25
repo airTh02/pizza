@@ -20,8 +20,6 @@ Este projeto simula um sistema de delivery de pizzaria, feito com foco em aprend
 
 - 📦 Cadastro de pedidos
 - 🚚 Simulação de entrega
-- 🗺️ Sistema de mapa de entrega
-- 📊 Filtros por cliente e pizza
 - 💻 Interface web responsiva e funcional
 - 💾 Banco de dados MySQL para armazenamento
 

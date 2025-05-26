@@ -1,20 +1,22 @@
 <?php
-session_start(); // Inicia a sessão
-
+session_start();
 
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    
     header("Location: login.html?erro=acesso_negado");
-    exit(); 
+    exit();
 }
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 include 'conexao.php';
+
 if ($conexao->connect_error) {
     die("<h1 style='color:red;'>Erro de conexão com o banco de dados: " . $conexao->connect_error . "</h1>");
 }
+
+$termo = isset($_POST['termo']) ? trim($_POST['termo']) : '';
+
 $sql = "SELECT 
           ped.id as pedido_id,
           c.nome as cliente, 
@@ -25,11 +27,103 @@ $sql = "SELECT
         FROM pedidos ped
         JOIN clientes c ON ped.cliente_id = c.id
         JOIN pizzas p ON ped.pizza_id = p.id
-        ORDER BY ped.id DESC";
+        ORDER BY c.nome ASC"; 
+
 $result = $conexao->query($sql);
+
+$dadosPedidos = [];
 $lista_pedidos_html = "";
+
+
 if ($result && $result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
+        $dadosPedidos[] = [
+            'pedido_id' => $row['pedido_id'],
+            'cliente' => $row['cliente'],
+            'pizza' => $row['pizza'],
+            'pagamento' => $row['pagamento'],
+            'observacoes' => $row['observacoes'],
+            'data_cadastro' => $row['data_cadastro']
+        ];
+    }
+}
+
+
+function buscaLinear($dados, $termo) {
+    $resultados = [];
+    foreach ($dados as $item) {
+        if (stripos($item['cliente'], $termo) !== false) {
+            $resultados[] = $item;
+        }
+    }
+    return $resultados;
+}
+
+
+function buscaBinaria($dados, $termo) {
+    $inicio = 0;
+    $fim = count($dados) - 1;
+    $resultados = [];
+
+    while ($inicio <= $fim) {
+        $meio = floor(($inicio + $fim) / 2);
+        $nome = strtolower($dados[$meio]['cliente']);
+        $termoBusca = strtolower($termo);
+
+        if (strpos($nome, $termoBusca) !== false) {
+
+            $esq = $meio;
+            while ($esq >= 0 && strpos(strtolower($dados[$esq]['cliente']), $termoBusca) !== false) {
+                $resultados[] = $dados[$esq];
+                $esq--;
+            }
+
+            $dir = $meio + 1;
+            while ($dir < count($dados) && strpos(strtolower($dados[$dir]['cliente']), $termoBusca) !== false) {
+                $resultados[] = $dados[$dir];
+                $dir++;
+            }
+            break;
+        } elseif ($termoBusca < $nome) {
+            $fim = $meio - 1;
+        } else {
+            $inicio = $meio + 1;
+        }
+    }
+
+    return $resultados;
+}
+
+if (!empty($termo)) {
+ 
+    $resultadosBusca = buscaLinear($dadosPedidos, $termo);
+
+    if (count($resultadosBusca) > 0) {
+        foreach ($resultadosBusca as $row) {
+            $lista_pedidos_html .= "<li>";
+            $lista_pedidos_html .= "<div style='margin-bottom: 5px;'><strong style='color:#F96D00;'>Pedido #" . htmlspecialchars($row['pedido_id']) . "</strong></div>";
+            $lista_pedidos_html .= "<div><b>Cliente:</b> " . htmlspecialchars($row['cliente']) . "</div>";
+            $lista_pedidos_html .= "<div><b>Pizza:</b> " . htmlspecialchars($row['pizza']) . "</div>";
+            $lista_pedidos_html .= "<div><b>Pagamento:</b> " . htmlspecialchars($row['pagamento']) . "</div>";
+            $lista_pedidos_html .= "<div><b>Observações:</b> " . (!empty($row['observacoes']) ? htmlspecialchars($row['observacoes']) : 'Nenhuma') . "</div>";
+            $lista_pedidos_html .= "<div style='margin-top: 5px; font-size: 0.8em; color: #666;'>";
+            $lista_pedidos_html .= "Data: " . date('d/m/Y H:i', strtotime($row['data_cadastro']));
+            $lista_pedidos_html .= "</div>";
+            $lista_pedidos_html .= "</li>";
+        }
+    } else {
+        $lista_pedidos_html = "<li class='no-pedidos'>";
+        $lista_pedidos_html .= "Nenhum pedido encontrado para o termo: <strong>" . htmlspecialchars($termo) . "</strong><br><br>";
+        $lista_pedidos_html .= "<form method='post'>";
+        $lista_pedidos_html .= "<input type='submit' value='Ver todos os pedidos' style='padding: 5px 10px; background-color: #F96D00; color: white; border: none; border-radius: 5px; cursor: pointer;'>";
+        $lista_pedidos_html .= "</form>";
+        $lista_pedidos_html .= "</li>";
+
+    }
+
+} else {
+
+    foreach ($dadosPedidos as $row) {
         $lista_pedidos_html .= "<li>";
         $lista_pedidos_html .= "<div style='margin-bottom: 5px;'><strong style='color:#F96D00;'>Pedido #" . htmlspecialchars($row['pedido_id']) . "</strong></div>";
         $lista_pedidos_html .= "<div><b>Cliente:</b> " . htmlspecialchars($row['cliente']) . "</div>";
@@ -41,14 +135,12 @@ if ($result && $result->num_rows > 0) {
         $lista_pedidos_html .= "</div>";
         $lista_pedidos_html .= "</li>";
     }
-} else {
-    $lista_pedidos_html = "<li class='no-pedidos'>Nenhum pedido encontrado no banco de dados.</li>";
-    if (!$result) {
-        $lista_pedidos_html .= "<li class='no-pedidos'>Erro na consulta SQL: " . $conexao->error . "</li>";
-    }
 }
+
 $conexao->close();
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -160,13 +252,22 @@ $conexao->close();
 		</div>
 	</nav>
 
+        
     <section id="adm_pedidos">
-        <div class="one-half img" style="background-image: url(images/about.jpg);"></div>
-        <h1>Lista de Pedidos</h1>
-        <ul id="lista-pedidos">
-            <?php echo $lista_pedidos_html; ?>
-        </ul>
-    </section>
+    <form method="POST" style="margin-bottom: 20px;">
+        <input type="text" name="termo" placeholder="Buscar cliente..." required
+            style="padding:8px; border-radius:5px; border:1px solid #ccc;">
+        <button type="submit" style="padding:8px 12px; border:none; background:#F96D00; color:white; border-radius:5px;">
+            Buscar
+        </button>
+    </form>
+
+    <div class="one-half img" style="background-image: url(images/about.jpg);"></div>
+    <h1>Lista de Pedidos</h1>
+    <ul id="lista-pedidos">
+        <?php echo $lista_pedidos_html; ?>
+    </ul>
+</section>
 
     <footer>
         <p>--- Painel de Pedidos da Pizzaria Tabajara ---</p>

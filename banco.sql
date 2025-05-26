@@ -45,4 +45,4 @@ INSERT INTO pizzas (nome, ingredientes, preco) VALUES
 ('Ultimate Overload', 'Muito queijo, pepperoni, bacon, calabresa, cebola, azeitonas', 45.00),
 ('Pizza de Bacon', 'Massa tradicional, bacon, queijo e toque especial', 36.00),
 ('Presunto & Abacaxi', 'Massa tradicional, bacon, queijo e toque especial', 36.00);
-   -- INSERT INTO funcionarios (usuario, senha, nome) VALUES ('admin', 'SEU_HASH_DA_SENHA_AQUI', 'Administrador');
+INSERT INTO funcionarios (usuario, senha, nome) VALUES ('admin', '$2y$10$yrOIEvqBimSGR.RoKbiEq.NblcjR/ekzkZhOnkfSvqrF8139AP6N.', 'Administrador');
